@@ -15,6 +15,7 @@ public:
     cv::Rect getRect(int frame);
     int getSize();
     cv::Rect getRectIndex (int index);
+    int getFrameNo (int index);
 
 private:
     QString name;

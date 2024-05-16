@@ -39,6 +39,8 @@ private:
     dataCollection col;
     void displayFrame(bool normalPlayback);
     int counter;
+    int videoWidth;
+    int videoHeight;
 
 private slots:
     void on_timeout();

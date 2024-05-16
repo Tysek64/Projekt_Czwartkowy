@@ -57,3 +57,15 @@ cv::Rect trackedObject::getRectIndex (int index) {
 
     return *new cv::Rect(-1, -1, -1, -1);
 }
+
+int trackedObject::getFrameNo (int index) {
+    for (int k : rects->keys()) {
+        if (index == 0) {
+            return k;
+        } else {
+            index--;
+        }
+    }
+
+    return -1;
+}

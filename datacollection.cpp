@@ -58,3 +58,15 @@ cv::Rect dataCollection::getImage (int frame) {
 
     return *new cv::Rect(-1, -1, -1, -1);
 }
+
+int dataCollection::getFrameNo (int frame) {
+    for (QString k : rects->keys()) {
+        if (frame < rects->value(k).getSize()) {
+            return rects->value(k).getFrameNo(frame);
+        } else {
+            frame -= rects->value(k).getSize();
+        }
+    }
+
+    return -1;
+}

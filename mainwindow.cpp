@@ -30,6 +30,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     currentFrameNo = 0;
     counter = 0;
+
     paintMode = false;
 
     connect(&timer, SIGNAL(timeout()), this, SLOT(on_timeout()));
@@ -57,7 +58,7 @@ void MainWindow::displayFrame (bool normalPlayback) {
         }
         ui->timeline->setValue(currentFrameNo);
         cap.read(frame);
-        cv::resize(frame, frame, cv::Size(this->ui->verticalLayout->geometry().width(), this->ui->verticalLayout->geometry().height()));
+        cv::resize(frame, frame, cv::Size(videoWidth, videoHeight));
         cvtColor(frame, frame, cv::COLOR_BGR2RGB);
         QImage dest((const uchar *)frame.data, frame.cols, frame.rows, frame.step, QImage::Format_RGB888);
 
@@ -137,6 +138,8 @@ void MainWindow::on_openButton_clicked() {
     cap.open(filename.toStdString(), cv::CAP_ANY);
     if (cap.get(cv::CAP_PROP_FRAME_COUNT) > 0) {
         currentFrameNo = 0;
+        videoWidth = this->ui->verticalLayout->geometry().width();
+        videoHeight = this->ui->verticalLayout->geometry().height();
         paintMode = false;
         player->setPaintMode(false);
         ui->pauseButton->setIcon(*new QIcon(":/icons/icons/pause.svg"));
@@ -208,13 +211,29 @@ void MainWindow::on_saveButton_clicked()
 {
     savePath = QFileDialog::getExistingDirectory(this, "Choose save folder", QDir::homePath());
     for (int i = 0;i < col.getSize();i++) {
-        cv::Mat croppedImage =  frame(col.getImage(i));
-        QFile savedImage = QFile(savePath + "/" + QString::number(i) + ".png");
-        if (savedImage.open(QIODevice::WriteOnly)) {
-        QImage dest((const uchar *)croppedImage.data, croppedImage.cols, croppedImage.rows, croppedImage.step, QImage::Format_RGB888);
+        cap.set(cv::CAP_PROP_POS_FRAMES, col.getFrameNo(i));
+        cv::Mat trackedFrame;
+        cap.read(trackedFrame);
+        qDebug() << 'a';
+        cv::resize(trackedFrame, trackedFrame, cv::Size(videoWidth, videoHeight));
+        cvtColor(trackedFrame, trackedFrame, cv::COLOR_BGR2RGB);
+        cv::Rect roi = col.getImage(i);
+        qDebug() << i << ' ' << col.getFrameNo(i) << ' ' << roi.width << ' ' << roi.height << ' ' << roi.x << ' ' << roi.y;
+        if (roi.x + roi.width > videoWidth) {
+            roi = *new cv::Rect(roi.x, roi.y, videoWidth - roi.x, roi.height);
+        }
 
-        //player->setPixmap(QPixmap::fromImage(dest));
-        QPixmap::fromImage(dest).save(savedImage.fileName());
+        if (roi.y + roi.height > videoHeight) {
+            roi = *new cv::Rect(roi.x, roi.y, roi.width, videoHeight - roi.y);
+        }
+        cv::Mat croppedImage = trackedFrame(roi);
+        qDebug() << 'A';
+        QFile savedImage = QFile(savePath + "/" + QString::number(col.getFrameNo(i)) + ".png");
+        if (savedImage.open(QIODevice::WriteOnly)) {
+            qDebug() << 'b';
+            QImage dest((const uchar *)croppedImage.data, croppedImage.cols, croppedImage.rows, croppedImage.step, QImage::Format_RGB888);
+            qDebug() << 'c';
+            QPixmap::fromImage(dest).save(savedImage.fileName());
         }
     }
 }

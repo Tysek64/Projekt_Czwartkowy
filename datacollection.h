@@ -21,6 +21,7 @@ public:
     void setRect (trackedObject rect);
     int getSize();
     cv::Rect getImage(int frame);
+    int getFrameNo(int frame);
 
 private:
     QHash<QString, trackedObject>* rects;
