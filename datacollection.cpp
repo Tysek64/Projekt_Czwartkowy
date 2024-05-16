@@ -27,13 +27,20 @@ void dataCollection::setActiveItem (QString name) {
     activeItem = name;
 }
 
-void dataCollection::removeActiveItem () {
+void dataCollection::removeActiveItem (bool withName) {
     rects->remove(activeItem);
-    activeItem = NULL;
+    if (withName) {
+        activeItem = NULL;
+    }
 }
 
-int dataCollection::test() {
-    return rects->size();
+int dataCollection::getSize() {
+    int result = 0;
+    for (QString k : rects->keys()) {
+        result += rects->value(k).getSize();
+    }
+
+    return result;
 }
 
 void dataCollection::setRect (trackedObject rect) {

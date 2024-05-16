@@ -41,3 +41,7 @@ void trackedObject::setEnd (int frame) {
 cv::Rect trackedObject::getRect (int frame) {
     return rects->value(frame);
 }
+
+int trackedObject::getSize() {
+    return rects->size();
+}

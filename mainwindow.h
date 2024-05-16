@@ -20,6 +20,7 @@ class MainWindow : public QMainWindow
     QTimer timer;
     videoPlayer *player;
     QString filename;
+    QString savePath;
 
     cv::VideoCapture cap;
     cv::Mat frame;
@@ -51,5 +52,6 @@ private slots:
     void on_selectionList_itemDoubleClicked(QListWidgetItem *item);
     void on_removeButton_clicked();
     void on_selectionList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
+    void on_saveButton_clicked();
 };
 #endif // MAINWINDOW_H

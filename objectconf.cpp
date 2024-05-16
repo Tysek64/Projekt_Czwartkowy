@@ -21,7 +21,6 @@ QString objectConf::getName() {
 
 void objectConf::on_buttonBox_accepted()
 {
-    qDebug() << dataReceiver->getcol().test();
     dataReceiver->getConf(ui->lineEdit->text(), ui->spinBox->value(), ui->spinBox_2->value());
 }
 

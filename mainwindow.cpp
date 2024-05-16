@@ -45,7 +45,6 @@ void MainWindow::on_timeout () {
 }
 
 void MainWindow::displayFrame (bool normalPlayback) {
-    //qDebug() << this->ui->verticalLayout->geometry().width() << " " << this->ui->verticalLayout->geometry().height();
     player->setFrame(frame);
     player->updateFrame(currentFrameNo);
     if (currentFrameNo >= cap.get(cv::CAP_PROP_FRAME_COUNT)) {
@@ -162,8 +161,6 @@ void MainWindow::on_addButton_clicked()
     col.addItem(QString::number(counter));
 
     counter++;
-
-    qDebug() << col.test();
 }
 
 
@@ -171,14 +168,13 @@ void MainWindow::on_selectionList_itemDoubleClicked(QListWidgetItem *item)
 {
     objectConf *conf = new objectConf(this, *this);
     conf->show();
-    qDebug() << conf->getName();
 }
 
 
 void MainWindow::on_removeButton_clicked()
 {
     if (ui->selectionList->currentItem() != NULL) {
-        col.removeActiveItem();
+        col.removeActiveItem(true);
         ui->selectionList->takeItem(ui->selectionList->currentRow());
         if (ui->selectionList->currentItem() != NULL) {
             col.setActiveItem(ui->selectionList->currentItem()->text());
@@ -200,10 +196,18 @@ dataCollection MainWindow::getcol () {
 }
 
 void MainWindow::getConf (QString name, int start, int end) {
-    qDebug() << col.test();
     trackedObject modified = col.getActiveItem();
-    col.removeActiveItem();
+    col.removeActiveItem(false);
     modified.setStart(start);
     modified.setEnd(end);
     col.setRect(modified);
 }
+
+void MainWindow::on_saveButton_clicked()
+{
+    savePath = QFileDialog::getExistingDirectory(this, "Choose save folder", QDir::homePath());
+    for (int i = 0;i < col.getSize();i++) {
+        qDebug() << 'a';
+    }
+}
+

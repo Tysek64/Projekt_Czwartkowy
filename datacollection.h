@@ -13,12 +13,13 @@ public:
     void init();
     void addItem (QString name);
     void removeItem(QString name);
-    void removeActiveItem();
+    void removeActiveItem(bool withName);
     QString getActiveName();
     trackedObject getActiveItem();
     void setActiveItem (QString name);
     int test();
     void setRect (trackedObject rect);
+    int getSize();
 
 private:
     QHash<QString, trackedObject>* rects;

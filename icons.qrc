@@ -8,5 +8,6 @@
         <file>icons/paint.svg</file>
         <file>icons/add.svg</file>
         <file>icons/remove.svg</file>
+        <file>icons/save.svg</file>
     </qresource>
 </RCC>

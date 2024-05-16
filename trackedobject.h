@@ -13,6 +13,7 @@ public:
     void setEnd (int frame);
     void addRect(int frame, cv::Rect rect, bool force);
     cv::Rect getRect(int frame);
+    int getSize();
 
 private:
     QString name;

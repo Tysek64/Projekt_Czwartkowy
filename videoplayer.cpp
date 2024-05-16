@@ -23,9 +23,6 @@ void videoPlayer::paintEvent (QPaintEvent *e) {
 
     QPainter painter(this);
 
-    //qDebug() << col->getActiveItem() << ' ' << col->getRect(col->getActiveItem()).area();
-    //qDebug() << col->test();
-
     painter.setBrush(QBrush(QColor(255, 0, 0, 100)));
     if (paintMode && x != -1 && y != -1 && w != -1 && h != -1) {
         if (col->getActiveItem().getRect(currentFrameNo).width > 0) {
@@ -107,6 +104,5 @@ void videoPlayer::updateFrame (int frame) {
 }
 
 void videoPlayer::changeActive () {
-    qDebug() << 'a';
     repaint();
 }
