@@ -47,8 +47,6 @@ void MainWindow::on_timeout () {
 }
 
 void MainWindow::displayFrame (bool normalPlayback) {
-    player->setFrame(frame);
-    player->updateFrame(currentFrameNo);
     if (currentFrameNo >= cap.get(cv::CAP_PROP_FRAME_COUNT)) {
         timer.stop();
         ui->pauseButton->setIcon(*new QIcon(":/icons/icons/play.svg"));
@@ -65,6 +63,8 @@ void MainWindow::displayFrame (bool normalPlayback) {
         player->setPixmap(QPixmap::fromImage(dest));
         ui->currentFrame->display(currentFrameNo);
     }
+    player->setFrame(frame);
+    player->updateFrame(currentFrameNo);
 }
 
 void MainWindow::on_pauseButton_clicked()
@@ -214,11 +214,9 @@ void MainWindow::on_saveButton_clicked()
         cap.set(cv::CAP_PROP_POS_FRAMES, col.getFrameNo(i));
         cv::Mat trackedFrame;
         cap.read(trackedFrame);
-        qDebug() << 'a';
         cv::resize(trackedFrame, trackedFrame, cv::Size(videoWidth, videoHeight));
         cvtColor(trackedFrame, trackedFrame, cv::COLOR_BGR2RGB);
         cv::Rect roi = col.getImage(i);
-        qDebug() << i << ' ' << col.getFrameNo(i) << ' ' << roi.width << ' ' << roi.height << ' ' << roi.x << ' ' << roi.y;
         if (roi.x + roi.width > videoWidth) {
             roi = *new cv::Rect(roi.x, roi.y, videoWidth - roi.x, roi.height);
         }
@@ -227,12 +225,9 @@ void MainWindow::on_saveButton_clicked()
             roi = *new cv::Rect(roi.x, roi.y, roi.width, videoHeight - roi.y);
         }
         cv::Mat croppedImage = trackedFrame(roi);
-        qDebug() << 'A';
         QFile savedImage = QFile(savePath + "/" + QString::number(col.getFrameNo(i)) + ".png");
         if (savedImage.open(QIODevice::WriteOnly)) {
-            qDebug() << 'b';
             QImage dest((const uchar *)croppedImage.data, croppedImage.cols, croppedImage.rows, croppedImage.step, QImage::Format_RGB888);
-            qDebug() << 'c';
             QPixmap::fromImage(dest).save(savedImage.fileName());
         }
     }
