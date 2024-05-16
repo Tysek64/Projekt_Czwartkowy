@@ -170,7 +170,7 @@ void MainWindow::on_addButton_clicked()
 
 void MainWindow::on_selectionList_itemDoubleClicked(QListWidgetItem *item)
 {
-    objectConf *conf = new objectConf(this, *this);
+    objectConf *conf = new objectConf(this, *this, col.getActiveItem());
     conf->show();
 }
 
@@ -199,11 +199,13 @@ dataCollection MainWindow::getcol () {
     return col;
 }
 
-void MainWindow::getConf (QString name, int start, int end) {
+void MainWindow::getConf (QString name, int start, int end, int labelClass, int labelType) {
     trackedObject modified = col.getActiveItem();
     col.removeActiveItem(false);
     modified.setStart(start);
     modified.setEnd(end);
+    modified.setClass(labelClass);
+    modified.setType(labelType);
     col.setRect(modified);
 }
 
@@ -214,7 +216,6 @@ void MainWindow::on_saveButton_clicked()
         cap.set(cv::CAP_PROP_POS_FRAMES, col.getFrameNo(i));
         cv::Mat trackedFrame;
         cap.read(trackedFrame);
-        cv::resize(trackedFrame, trackedFrame, cv::Size(videoWidth, videoHeight));
         cvtColor(trackedFrame, trackedFrame, cv::COLOR_BGR2RGB);
         cv::Rect roi = col.getImage(i);
         if (roi.x + roi.width > videoWidth) {
@@ -224,12 +225,32 @@ void MainWindow::on_saveButton_clicked()
         if (roi.y + roi.height > videoHeight) {
             roi = *new cv::Rect(roi.x, roi.y, roi.width, videoHeight - roi.y);
         }
+
+        if (roi.x < 0) {
+            roi = *new cv::Rect(0, roi.y, roi.width + roi.x, roi.height);
+        }
+
+        if (roi.y < 0) {
+            roi = *new cv::Rect(roi.x, 0, roi.width, roi.height + roi.y);
+        }
+
+        float hScale = (float)trackedFrame.cols / (float)videoWidth;
+        float vScale = (float)trackedFrame.rows / (float)videoHeight;
+
+        roi = *new cv::Rect(hScale * roi.x, vScale * roi.y, hScale * roi.width, vScale * roi.height);
+
         cv::Mat croppedImage = trackedFrame(roi);
         QFile savedImage = QFile(savePath + "/" + QString::number(col.getFrameNo(i)) + ".png");
         if (savedImage.open(QIODevice::WriteOnly)) {
             QImage dest((const uchar *)croppedImage.data, croppedImage.cols, croppedImage.rows, croppedImage.step, QImage::Format_RGB888);
             QPixmap::fromImage(dest).save(savedImage.fileName());
+        } else {
+            QMessageBox mb;
+            mb.critical(this, "Save error", "Error saving file");
         }
     }
+
+    QMessageBox mb;
+    mb.information(this, "Save complete", "Finished saving files");
 }
 

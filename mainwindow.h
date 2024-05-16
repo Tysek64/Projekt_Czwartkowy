@@ -32,7 +32,7 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
     dataCollection getcol();
-    void getConf (QString name, int start, int end);
+    void getConf (QString name, int start, int end, int labelClass, int labelType);
 
 private:
     Ui::MainWindow *ui;

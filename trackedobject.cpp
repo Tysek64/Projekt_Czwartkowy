@@ -5,6 +5,8 @@ trackedObject::trackedObject() {
     name = *new QString("test");
     startFrame = 0;
     endFrame = 3000;
+    labelClass = -1;
+    labelType = -1;
     rects = new QHash<int, cv::Rect>();
 }
 
@@ -36,6 +38,30 @@ void trackedObject::setEnd (int frame) {
             rects->remove(k);
         }
     }
+}
+
+void trackedObject::setClass (int labelClass) {
+    this->labelClass = labelClass;
+}
+
+void trackedObject::setType (int labelType) {
+    this->labelType = labelType;
+}
+
+int trackedObject::getStart () {
+    return this->startFrame;
+}
+
+int trackedObject::getEnd () {
+    return this->endFrame;
+}
+
+int trackedObject::getClass () {
+    return this->labelClass;
+}
+
+int trackedObject::getType () {
+    return this->labelType;
 }
 
 cv::Rect trackedObject::getRect (int frame) {
