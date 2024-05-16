@@ -11,6 +11,8 @@
 #include <direct.h>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QJsonObject>
+#include <QJsonDocument>
 #include <objectconf.h>
 #include <QPixmap>
 
@@ -239,12 +241,7 @@ void MainWindow::on_saveButton_clicked()
 
         roi = *new cv::Rect(hScale * roi.x, vScale * roi.y, hScale * roi.width, vScale * roi.height);
 
-        cv::Mat croppedImage = trackedFrame(roi);
-        QFile savedImage = QFile(savePath + "/" + QString::number(col.getFrameNo(i)) + ".png");
-        if (savedImage.open(QIODevice::WriteOnly)) {
-            QImage dest((const uchar *)croppedImage.data, croppedImage.cols, croppedImage.rows, croppedImage.step, QImage::Format_RGB888);
-            QPixmap::fromImage(dest).save(savedImage.fileName());
-        } else {
+        if (!saveFile(trackedFrame, roi, col.getFrameNo(i), col.getItem(i).getClass(), col.getItem(i).getType(), savePath, "")) {
             QMessageBox mb;
             mb.critical(this, "Save error", "Error saving file");
         }
@@ -254,3 +251,56 @@ void MainWindow::on_saveButton_clicked()
     mb.information(this, "Save complete", "Finished saving files");
 }
 
+    bool MainWindow::saveFile(cv::Mat image, cv::Rect roi, int frameNo, int labelClass, int labelType, QString dir, QString filename)
+{
+    QString savedFilename = dir + "/" + filename
+                            + "_" + QString::number( frameNo )
+                            + "_" + QString::number( roi.x )
+                            + "_" + QString::number( roi.y )
+                            + "_" + QString::number( roi.x + roi.width )
+                            + "_" + QString::number( roi.y + roi.height )
+                            + "_" + QString::number( labelType )
+                            + "_" + QString::number( labelClass ) + ".png";
+    QFile savedImage = QFile(savedFilename);
+    if (savedImage.open(QIODevice::WriteOnly))
+    {
+        cv::Mat croppedImage = image(roi);
+        QImage dest((const uchar *)croppedImage.data, croppedImage.cols, croppedImage.rows, croppedImage.step, QImage::Format_RGB888);
+        (QPixmap::fromImage(dest)).save(savedFilename);
+
+        QString savedFilenameJSON = savedFilename;
+        savedFilenameJSON.replace(QObject::tr(".png"),QObject::tr(".json"));
+
+        QFile savedJSON = QFile(savedFilenameJSON);
+
+        QJsonObject regionMetadata;
+        regionMetadata.insert("x1", roi.x);
+        regionMetadata.insert("y1", roi.y);
+        regionMetadata.insert("x2", roi.x + roi.width);
+        regionMetadata.insert("y2", roi.y + roi.height);
+
+        QJsonObject imageMetadata;
+        imageMetadata.insert("file_source", filename);
+        imageMetadata.insert("framenumber", frameNo);
+        imageMetadata.insert("region", regionMetadata);
+        imageMetadata.insert("label_type", labelType);
+        imageMetadata.insert("label_class", labelClass);
+        imageMetadata.insert("file_image", QFileInfo(savedFilename).baseName());
+
+        QJsonDocument jsonToSave;
+        jsonToSave.setObject(imageMetadata);
+
+        if(savedJSON.open(QIODevice::WriteOnly))
+        {
+            savedJSON.write(jsonToSave.toJson());
+            savedJSON.close();
+        }
+
+    }
+    else
+    {
+        return false;
+    }
+
+    return true;
+}

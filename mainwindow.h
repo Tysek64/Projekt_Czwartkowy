@@ -41,6 +41,7 @@ private:
     int counter;
     int videoWidth;
     int videoHeight;
+    bool saveFile(cv::Mat image, cv::Rect roi, int frameNo, int labelClass, int labelType, QString dir, QString filename);
 
 private slots:
     void on_timeout();

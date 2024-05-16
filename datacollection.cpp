@@ -70,3 +70,15 @@ int dataCollection::getFrameNo (int frame) {
 
     return -1;
 }
+
+trackedObject dataCollection::getItem(int frame) {
+    for (QString k : rects->keys()) {
+        if (frame < rects->value(k).getSize()) {
+            return rects->value(k);
+        } else {
+            frame -= rects->value(k).getSize();
+        }
+    }
+
+    return *new trackedObject();
+}
