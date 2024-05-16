@@ -14,6 +14,7 @@ public:
     void addRect(int frame, cv::Rect rect, bool force);
     cv::Rect getRect(int frame);
     int getSize();
+    cv::Rect getRectIndex (int index);
 
 private:
     QString name;

@@ -46,3 +46,15 @@ int dataCollection::getSize() {
 void dataCollection::setRect (trackedObject rect) {
     rects->insert(activeItem, rect);
 }
+
+cv::Rect dataCollection::getImage (int frame) {
+    for (QString k : rects->keys()) {
+        if (frame < rects->value(k).getSize()) {
+            return rects->value(k).getRectIndex(frame);
+        } else {
+            frame -= rects->value(k).getSize();
+        }
+    }
+
+    return *new cv::Rect(-1, -1, -1, -1);
+}

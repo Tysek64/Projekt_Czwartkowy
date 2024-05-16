@@ -12,6 +12,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <objectconf.h>
+#include <QPixmap>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -207,7 +208,14 @@ void MainWindow::on_saveButton_clicked()
 {
     savePath = QFileDialog::getExistingDirectory(this, "Choose save folder", QDir::homePath());
     for (int i = 0;i < col.getSize();i++) {
-        qDebug() << 'a';
+        cv::Mat croppedImage =  frame(col.getImage(i));
+        QFile savedImage = QFile(savePath + "/" + QString::number(i) + ".png");
+        if (savedImage.open(QIODevice::WriteOnly)) {
+        QImage dest((const uchar *)croppedImage.data, croppedImage.cols, croppedImage.rows, croppedImage.step, QImage::Format_RGB888);
+
+        //player->setPixmap(QPixmap::fromImage(dest));
+        QPixmap::fromImage(dest).save(savedImage.fileName());
+        }
     }
 }
 
