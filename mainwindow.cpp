@@ -240,7 +240,7 @@ void MainWindow::on_saveButton_clicked()
 
         roi = *new cv::Rect(hScale * roi.x, vScale * roi.y, hScale * roi.width, vScale * roi.height);
 
-        if (!saveFile(trackedFrame, roi, col.getFrameNo(i), col.getItem(i).getClass(), col.getItem(i).getType(), savePath, "")) {
+        if (!saveFile(trackedFrame, roi, col.getFrameNo(i), col.getItem(i).getClass(), col.getItem(i).getType(), savePath, QFileInfo(filename).baseName())) {
             QMessageBox mb;
             mb.critical(this, "Save error", "Error saving file");
         }
