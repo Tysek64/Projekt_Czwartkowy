@@ -6,6 +6,7 @@ videoPlayer::videoPlayer(QWidget *parent, dataCollection &col)
     : QLabel{parent}
 {
     paintMode = false;
+    mousePressed = false;
     x = -1;
     y = -1;
     w = -1;
@@ -25,7 +26,7 @@ void videoPlayer::paintEvent (QPaintEvent *e) {
 
     painter.setBrush(QBrush(QColor(255, 0, 0, 100)));
     if (paintMode && x != -1 && y != -1 && w != -1 && h != -1) {
-        if (col->getActiveItem().getRect(currentFrameNo).width > 0) {
+        if (!mousePressed && col->getActiveItem().getRect(currentFrameNo).width > 0) {
             cv::Rect rect = col->getActiveItem().getRect(currentFrameNo);
             painter.drawRect(rect.x, rect.y, rect.width, rect.height);
         } else {
@@ -53,6 +54,8 @@ void videoPlayer::mousePressEvent (QMouseEvent *e) {
     this->h = -1;
 
     this->repaint();
+
+    mousePressed = true;
     }
 }
 
@@ -66,6 +69,8 @@ void videoPlayer::mouseMoveEvent (QMouseEvent *e) {
 }
 
 void videoPlayer::mouseReleaseEvent (QMouseEvent *e) {
+    mousePressed = false;
+
     if (paintMode) {
     if (this->w < 0) {
         this->x += this->w;

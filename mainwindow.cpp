@@ -172,10 +172,9 @@ void MainWindow::on_addButton_clicked()
 
 void MainWindow::on_selectionList_itemDoubleClicked(QListWidgetItem *item)
 {
-    objectConf *conf = new objectConf(this, *this, col.getActiveItem());
+    objectConf *conf = new objectConf(this, *this, col.getActiveItem(), cap.get(cv::CAP_PROP_FRAME_COUNT));
     conf->show();
 }
-
 
 void MainWindow::on_removeButton_clicked()
 {

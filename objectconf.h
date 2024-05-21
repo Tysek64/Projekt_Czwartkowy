@@ -13,7 +13,7 @@ class objectConf : public QDialog
     Q_OBJECT
 
 public:
-    explicit objectConf(QWidget *parent = nullptr, MainWindow &dataReceiver = *new MainWindow(), trackedObject activeItem = *new trackedObject());
+    explicit objectConf(QWidget *parent = nullptr, MainWindow &dataReceiver = *new MainWindow(), trackedObject activeItem = *new trackedObject(), int maxFrame = 0);
     ~objectConf();
 
     QString getName();

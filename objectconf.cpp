@@ -6,13 +6,17 @@
 #include <QJsonArray>
 #include <QList>
 
-objectConf::objectConf(QWidget *parent, MainWindow &dataReceiver, trackedObject activeItem)
+objectConf::objectConf(QWidget *parent, MainWindow &dataReceiver, trackedObject activeItem, int maxFrame)
     : QDialog(parent)
     , ui(new Ui::objectConf)
 {
     ui->setupUi(this);
     ui->classSelect->addItem("-");
     ui->typeSelect->addItem("-");
+    ui->spinBox->setMinimum(0);
+    ui->spinBox_2->setMinimum(0);
+    ui->spinBox->setMaximum(maxFrame);
+    ui->spinBox_2->setMaximum(maxFrame);
 
     QString jsonStringHelper;
     QFile jsonListsFile;

@@ -36,6 +36,7 @@ protected:
 private:
     dataCollection* col;
     int currentFrameNo;
+    bool mousePressed;
 
 signals:
 };
