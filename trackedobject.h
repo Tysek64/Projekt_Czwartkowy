@@ -18,6 +18,7 @@ public:
     int getClass();
     int getType();
     void addRect(int frame, cv::Rect rect, bool force);
+    void removeRect(int frame);
     cv::Rect getRect(int frame);
     int getSize();
     cv::Rect getRectIndex (int index);

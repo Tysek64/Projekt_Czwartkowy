@@ -9,5 +9,6 @@
         <file>icons/add.svg</file>
         <file>icons/remove.svg</file>
         <file>icons/save.svg</file>
+        <file>icons/erase.svg</file>
     </qresource>
 </RCC>

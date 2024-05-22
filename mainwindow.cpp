@@ -303,3 +303,10 @@ void MainWindow::on_saveButton_clicked()
 
     return true;
 }
+
+void MainWindow::on_eraseButton_clicked()
+{
+    col.getActiveItem().removeRect(currentFrameNo);
+    player->changeActive();
+}
+

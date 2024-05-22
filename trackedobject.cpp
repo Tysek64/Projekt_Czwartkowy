@@ -16,6 +16,12 @@ void trackedObject::addRect (int frame, cv::Rect rect, bool force) {
     }
 }
 
+void trackedObject::removeRect (int frame) {
+    if (((frame >= startFrame) && (frame <= endFrame)) && (rects->contains(frame))) {
+        rects->remove(frame);
+    }
+}
+
 void trackedObject::setName (QString name) {
     this->name = name;
 }
