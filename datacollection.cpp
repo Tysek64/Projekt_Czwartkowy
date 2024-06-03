@@ -23,8 +23,13 @@ trackedObject dataCollection::getActiveItem () {
     return rects->value(activeItem);
 }
 
-void dataCollection::setActiveItem (QString name) {
+void dataCollection::setActiveName (QString name) {
     activeItem = name;
+}
+
+void dataCollection::setActiveIten (trackedObject item) {
+    rects->remove(activeItem);
+    rects->insert(activeItem, item);
 }
 
 void dataCollection::removeActiveItem (bool withName) {
@@ -41,6 +46,14 @@ int dataCollection::getSize() {
     }
 
     return result;
+}
+
+int dataCollection::getHSize() {
+    return rects->size();
+}
+
+trackedObject dataCollection::getObject(int index) {
+    return rects->value(rects->keys()[index]);
 }
 
 void dataCollection::setRect (trackedObject rect) {
@@ -63,6 +76,18 @@ int dataCollection::getFrameNo (int frame) {
     for (QString k : rects->keys()) {
         if (frame < rects->value(k).getSize()) {
             return rects->value(k).getFrameNo(frame);
+        } else {
+            frame -= rects->value(k).getSize();
+        }
+    }
+
+    return -1;
+}
+
+float dataCollection::getConfidence (int frame) {
+    for (QString k : rects->keys()) {
+        if (frame < rects->value(k).getSize()) {
+            return rects->value(k).getConfidence(frame);
         } else {
             frame -= rects->value(k).getSize();
         }

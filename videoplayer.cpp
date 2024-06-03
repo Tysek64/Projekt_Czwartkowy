@@ -24,19 +24,30 @@ void videoPlayer::paintEvent (QPaintEvent *e) {
 
     QPainter painter(this);
 
-    painter.setBrush(QBrush(QColor(255, 0, 0, 100)));
+    painter.setBrush(QBrush(QColor(0, 200, 0, 100)));
     if (paintMode && x != -1 && y != -1 && w != -1 && h != -1) {
-        if (!mousePressed && col->getActiveItem().getRect(currentFrameNo).width > 0) {
-            cv::Rect rect = col->getActiveItem().getRect(currentFrameNo);
-            painter.drawRect(rect.x, rect.y, rect.width, rect.height);
+        if (!mousePressed) {
+            for (int i = 0;i < col->getHSize();i++) {
+                if (col->getObject(i).getRect(currentFrameNo).width > 0) {
+                    cv::Rect rect = col->getObject(i).getRect(currentFrameNo);
+                    painter.drawRect(rect.x, rect.y, rect.width, rect.height);
+                }
+            }
         } else {
             painter.drawRect(x, y, w, h);
         }
     }
-    if (col->getActiveItem().getRect(currentFrameNo).width > 0) {
+            for (int i = 0;i < col->getHSize();i++) {
+    if (col->getObject(i).getRect(currentFrameNo).width > 0) {
+                if (col->getObject(i).getRect(currentFrameNo).width > 0) {
+                    cv::Rect rect = col->getObject(i).getRect(currentFrameNo);
+                    painter.drawRect(rect.x, rect.y, rect.width, rect.height);
+                }
+    }
+            }
+    painter.setBrush(QBrush(QColor(255, 0, 0, 100)));
         cv::Rect rect = col->getActiveItem().getRect(currentFrameNo);
             painter.drawRect(rect.x, rect.y, rect.width, rect.height);
-        }
 
     painter.end();
 }
@@ -84,28 +95,26 @@ void videoPlayer::mouseReleaseEvent (QMouseEvent *e) {
 
     this->roi = *new cv::Rect(x, y, w, h);
 
-    this->col->getActiveItem().addRect(currentFrameNo, roi, true);
-
-    tracker = cv::TrackerNano::create();
-    tracker->init(frame, roi);
+    this->col->getActiveItem().addRect(currentFrameNo, roi, 1.0f, true);
+    this->col->getActiveItem().initTracker(frame, roi);
 
     repaint();
     }
 }
 
-void videoPlayer::setFrame (cv::Mat frame) {
-    this->frame = frame;
-}
-
-void videoPlayer::updateFrame (int frame) {
-    roi = col->getActiveItem().getRect(currentFrameNo);
-    if (this->roi.width > 0 && this->roi.height > 0) {
-        this->tracker->update(this->frame, roi);
-
-        col->getActiveItem().addRect(frame, roi, false);
+void videoPlayer::updateFrame (cv::Mat frame, int frameNo, bool track) {
+    if (track) {
+    for (int i = 0;i < col->getHSize();i++) {
+        roi = col->getObject(i).getRect(currentFrameNo);
+        if (this->roi.width > 0 && this->roi.height > 0 && col->getObject(i).getRect(frameNo).width <= 0) {
+            float confidence = this->col->getObject(i).updateTracker(frame, roi);
+        col->getObject(i).addRect(frameNo, roi, confidence, false);
+    }
+    }
     }
 
-    currentFrameNo = frame;
+    this->frame = frame;
+    currentFrameNo = frameNo;
 }
 
 void videoPlayer::changeActive () {

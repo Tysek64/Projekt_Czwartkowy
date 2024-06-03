@@ -16,12 +16,16 @@ public:
     void removeActiveItem(bool withName);
     QString getActiveName();
     trackedObject getActiveItem();
-    void setActiveItem (QString name);
+    trackedObject getObject (int index);
+    void setActiveName (QString name);
+    void setActiveIten (trackedObject item);
     int test();
     void setRect (trackedObject rect);
     int getSize();
+    int getHSize();
     cv::Rect getImage(int frame);
     int getFrameNo(int frame);
+    float getConfidence (int frame);
     trackedObject getItem(int frame);
 
 private:

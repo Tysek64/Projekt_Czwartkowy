@@ -23,7 +23,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     col = *new dataCollection();
-    col.setActiveItem("test");
+    col.setActiveName("test");
     player = new videoPlayer(this, col);
 
     QVBoxLayout* layout =  qobject_cast<QVBoxLayout *>(ui->playerContainer->layout());
@@ -65,8 +65,7 @@ void MainWindow::displayFrame (bool normalPlayback) {
         player->setPixmap(QPixmap::fromImage(dest));
         ui->currentFrame->display(currentFrameNo);
     }
-    player->setFrame(frame);
-    player->updateFrame(currentFrameNo);
+    player->updateFrame(frame, currentFrameNo, true);
 }
 
 void MainWindow::on_pauseButton_clicked()
@@ -88,8 +87,7 @@ void MainWindow::on_prevButton_clicked()
     if (!timer.isActive() && currentFrameNo > 0 && cap.isOpened()) {
         currentFrameNo--;
         displayFrame(false);
-        player->setFrame(frame);
-        player->updateFrame(currentFrameNo);
+        //player->updateFrame(frame, currentFrameNo, true);
     }
 }
 
@@ -99,8 +97,7 @@ void MainWindow::on_nextButton_clicked()
     if (!timer.isActive() && currentFrameNo < cap.get(cv::CAP_PROP_FRAME_COUNT) - 1 && cap.isOpened()) {
         currentFrameNo++;
         displayFrame(false);
-        player->setFrame(frame);
-        player->updateFrame(currentFrameNo);
+        //player->updateFrame(frame, currentFrameNo, true);
     }
 }
 
@@ -110,8 +107,7 @@ void MainWindow::on_timeline_sliderMoved(int position)
     if (cap.isOpened()) {
         currentFrameNo = position;
         displayFrame(false);
-        player->setFrame(frame);
-        player->updateFrame(currentFrameNo);
+        player->updateFrame(frame, currentFrameNo, true);
     }
 }
 
@@ -124,7 +120,7 @@ void MainWindow::on_paintButton_toggled(bool checked)
         ui->pauseButton->setIcon(*new QIcon(":/icons/icons/play.svg"));
         paintMode = true;
         player->setPaintMode(true);
-        player->setFrame(frame);
+        player->updateFrame(frame, currentFrameNo, false);
     } else {
         paintMode = false;
         player->setPaintMode(false);
@@ -140,8 +136,8 @@ void MainWindow::on_openButton_clicked() {
     cap.open(filename.toStdString(), cv::CAP_ANY);
     if (cap.get(cv::CAP_PROP_FRAME_COUNT) > 0) {
         currentFrameNo = 0;
-        videoWidth = this->ui->verticalLayout->geometry().width();
-        videoHeight = this->ui->verticalLayout->geometry().height();
+        videoWidth = this->ui->playerContainer->geometry().width();
+        videoHeight = this->ui->playerContainer->geometry().height();
         paintMode = false;
         player->setPaintMode(false);
         ui->pauseButton->setIcon(*new QIcon(":/icons/icons/pause.svg"));
@@ -182,7 +178,7 @@ void MainWindow::on_removeButton_clicked()
         col.removeActiveItem(true);
         ui->selectionList->takeItem(ui->selectionList->currentRow());
         if (ui->selectionList->currentItem() != NULL) {
-            col.setActiveItem(ui->selectionList->currentItem()->text());
+            col.setActiveName(ui->selectionList->currentItem()->text());
             player->changeActive();
         }
     }
@@ -191,7 +187,7 @@ void MainWindow::on_removeButton_clicked()
 void MainWindow::on_selectionList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous)
 {
     if (current != NULL) {
-        col.setActiveItem(current->text());
+        col.setActiveName(current->text());
         player->changeActive();
     }
 }
@@ -238,9 +234,9 @@ void MainWindow::on_saveButton_clicked()
         float hScale = (float)trackedFrame.cols / (float)videoWidth;
         float vScale = (float)trackedFrame.rows / (float)videoHeight;
 
-        roi = *new cv::Rect(hScale * roi.x, vScale * roi.y, hScale * roi.width, vScale * roi.height);
+        roi = *new cv::Rect((int)(hScale * (float)roi.x), (int)(vScale * (float)roi.y), (int)(hScale * (float)roi.width), (int)(vScale * (float)roi.height));
 
-        if (!saveFile(trackedFrame, roi, col.getFrameNo(i), col.getItem(i).getClass(), col.getItem(i).getType(), savePath, QFileInfo(filename).baseName())) {
+        if (!saveFile(trackedFrame, roi, col.getConfidence(i), col.getFrameNo(i), col.getItem(i).getClass(), col.getItem(i).getType(), savePath, QFileInfo(filename).baseName())) {
             QMessageBox mb;
             mb.critical(this, "Save error", "Error saving file");
         }
@@ -250,7 +246,7 @@ void MainWindow::on_saveButton_clicked()
     mb.information(this, "Save complete", "Finished saving files");
 }
 
-    bool MainWindow::saveFile(cv::Mat image, cv::Rect roi, int frameNo, int labelClass, int labelType, QString dir, QString filename)
+    bool MainWindow::saveFile(cv::Mat image, cv::Rect roi, float confidence, int frameNo, int labelClass, int labelType, QString dir, QString filename)
 {
     QString savedFilename = dir + "/" + filename
                             + "_" + QString::number( frameNo )
@@ -282,6 +278,7 @@ void MainWindow::on_saveButton_clicked()
         imageMetadata.insert("file_source", filename);
         imageMetadata.insert("framenumber", frameNo);
         imageMetadata.insert("region", regionMetadata);
+        imageMetadata.insert("confidence", confidence);
         imageMetadata.insert("label_type", labelType);
         imageMetadata.insert("label_class", labelClass);
         imageMetadata.insert("file_image", QFileInfo(savedFilename).baseName());
@@ -308,5 +305,21 @@ void MainWindow::on_eraseButton_clicked()
 {
     col.getActiveItem().removeRect(currentFrameNo);
     player->changeActive();
+}
+
+
+void MainWindow::on_startButton_clicked()
+{
+    trackedObject current = col.getActiveItem();
+    current.setStart(currentFrameNo);
+    col.setActiveIten(current);
+}
+
+
+void MainWindow::on_endButton_clicked()
+{
+    trackedObject current = col.getActiveItem();
+    current.setEnd(currentFrameNo);
+    col.setActiveIten(current);
 }
 

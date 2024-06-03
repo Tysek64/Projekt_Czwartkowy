@@ -7,12 +7,22 @@ trackedObject::trackedObject() {
     endFrame = 3000;
     labelClass = -1;
     labelType = -1;
-    rects = new QHash<int, cv::Rect>();
+    rects = new QHash<int, QPair<cv::Rect, float>>();
+    tracker = cv::TrackerVit::create();
 }
 
-void trackedObject::addRect (int frame, cv::Rect rect, bool force) {
+void trackedObject::initTracker (cv::Mat frame, cv::Rect& roi) {
+    tracker->init(frame, roi);
+}
+
+float trackedObject::updateTracker (cv::Mat frame, cv::Rect& roi) {
+    tracker->update(frame, roi);
+    return tracker->getTrackingScore();
+}
+
+void trackedObject::addRect (int frame, cv::Rect rect, float confidence, bool force) {
     if ((frame >= startFrame && frame <= endFrame) && (!rects->contains(frame) || force)) {
-        rects->insert(frame, rect);
+        rects->insert(frame, *new QPair<cv::Rect, float>(rect, confidence));
     }
 }
 
@@ -71,7 +81,7 @@ int trackedObject::getType () {
 }
 
 cv::Rect trackedObject::getRect (int frame) {
-    return rects->value(frame);
+    return rects->value(frame).first;
 }
 
 int trackedObject::getSize() {
@@ -81,7 +91,7 @@ int trackedObject::getSize() {
 cv::Rect trackedObject::getRectIndex (int index) {
     for (int k : rects->keys()) {
         if (index == 0) {
-            return rects->value(k);
+            return rects->value(k).first;
         } else {
             index--;
         }
@@ -94,6 +104,18 @@ int trackedObject::getFrameNo (int index) {
     for (int k : rects->keys()) {
         if (index == 0) {
             return k;
+        } else {
+            index--;
+        }
+    }
+
+    return -1;
+}
+
+float trackedObject::getConfidence (int index) {
+    for (int k : rects->keys()) {
+        if (index == 0) {
+            return rects->value(k).second;
         } else {
             index--;
         }

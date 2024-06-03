@@ -21,10 +21,8 @@ public:
 
     cv::Mat frame;
     cv::Rect roi;
-    cv::Ptr<cv::Tracker> tracker;
 
-    void setFrame (cv::Mat frame);
-    void updateFrame (int frame);
+    void updateFrame (cv::Mat frame, int frameNo, bool track);
     void changeActive();
 
 protected:

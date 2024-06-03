@@ -41,7 +41,7 @@ private:
     int counter;
     int videoWidth;
     int videoHeight;
-    bool saveFile(cv::Mat image, cv::Rect roi, int frameNo, int labelClass, int labelType, QString dir, QString filename);
+    bool saveFile(cv::Mat image, cv::Rect roi, float confidence, int frameNo, int labelClass, int labelType, QString dir, QString filename);
 
 private slots:
     void on_timeout();
@@ -57,5 +57,7 @@ private slots:
     void on_selectionList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
     void on_saveButton_clicked();
     void on_eraseButton_clicked();
+    void on_startButton_clicked();
+    void on_endButton_clicked();
 };
 #endif // MAINWINDOW_H
