@@ -6,7 +6,7 @@
 #include <QJsonArray>
 #include <QList>
 
-objectConf::objectConf(QWidget *parent, MainWindow &dataReceiver, trackedObject activeItem, int maxFrame)
+objectConf::objectConf(QWidget *parent, MainWindow &dataReceiver, QString currentName, trackedObject activeItem, int maxFrame)
     : QDialog(parent)
     , ui(new Ui::objectConf)
 {
@@ -40,6 +40,7 @@ objectConf::objectConf(QWidget *parent, MainWindow &dataReceiver, trackedObject 
 
     this->dataReceiver = &dataReceiver;
 
+    ui->lineEdit->setText(currentName);
     ui->spinBox->setValue(activeItem.getStart());
     ui->spinBox_2->setValue(activeItem.getEnd());
     ui->classSelect->setCurrentIndex(activeItem.getClass() + 1);

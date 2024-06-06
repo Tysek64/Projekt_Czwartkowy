@@ -161,6 +161,7 @@ void MainWindow::on_addButton_clicked()
 {
     ui->selectionList->addItem(QString::number(counter));
     col.addItem(QString::number(counter));
+    itemNames.insert(QString::number(counter), counter);
 
     counter++;
 }
@@ -168,7 +169,7 @@ void MainWindow::on_addButton_clicked()
 
 void MainWindow::on_selectionList_itemDoubleClicked(QListWidgetItem *item)
 {
-    objectConf *conf = new objectConf(this, *this, col.getActiveItem(), cap.get(cv::CAP_PROP_FRAME_COUNT));
+    objectConf *conf = new objectConf(this, *this, itemNames.key(ui->selectionList->currentRow()), col.getActiveItem(), cap.get(cv::CAP_PROP_FRAME_COUNT));
     conf->show();
 }
 
@@ -176,7 +177,7 @@ void MainWindow::on_removeButton_clicked()
 {
     if (ui->selectionList->currentItem() != NULL) {
         col.removeActiveItem(true);
-        ui->selectionList->takeItem(ui->selectionList->currentRow());
+        ui->selectionList->takeItem(itemNames.value(QString::number(ui->selectionList->currentRow())));
         if (ui->selectionList->currentItem() != NULL) {
             col.setActiveName(ui->selectionList->currentItem()->text());
             player->changeActive();
@@ -187,7 +188,7 @@ void MainWindow::on_removeButton_clicked()
 void MainWindow::on_selectionList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous)
 {
     if (current != NULL) {
-        col.setActiveName(current->text());
+        col.setActiveName(QString::number(itemNames.value(current->text())));
         player->changeActive();
     }
 }
@@ -198,6 +199,9 @@ dataCollection MainWindow::getcol () {
 
 void MainWindow::getConf (QString name, int start, int end, int labelClass, int labelType) {
     trackedObject modified = col.getActiveItem();
+    int value = itemNames.take(col.getActiveName());
+    itemNames.insert(name, value);
+    ui->selectionList->currentItem()->setText(name);
     col.removeActiveItem(false);
     modified.setStart(start);
     modified.setEnd(end);

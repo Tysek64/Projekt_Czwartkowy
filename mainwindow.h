@@ -37,6 +37,7 @@ public:
 private:
     Ui::MainWindow *ui;
     dataCollection col;
+    QHash<QString, int> itemNames;
     void displayFrame(bool normalPlayback);
     int counter;
     int videoWidth;
