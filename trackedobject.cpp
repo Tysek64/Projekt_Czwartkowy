@@ -7,22 +7,33 @@ trackedObject::trackedObject() {
     endFrame = 3000;
     labelClass = -1;
     labelType = -1;
-    rects = new QHash<int, QPair<cv::Rect, float>>();
-    tracker = cv::TrackerVit::create();
+    rects = new QHash<int, QPair<doubleRect, float>>();
+    try {
+        tracker = cv::TrackerVit::create();
+        trackerPresent = true;
+    } catch (cv::Exception e) {
+        trackerPresent = false;
+    }
 }
 
 void trackedObject::initTracker (cv::Mat frame, cv::Rect& roi) {
-    tracker->init(frame, roi);
+    if (trackerPresent) {
+        tracker->init(frame, roi);
+    }
 }
 
 float trackedObject::updateTracker (cv::Mat frame, cv::Rect& roi) {
-    tracker->update(frame, roi);
-    return tracker->getTrackingScore();
+    if (trackerPresent) {
+        tracker->update(frame, roi);
+        return tracker->getTrackingScore();
+    } else {
+        return 0.0f;
+    }
 }
 
-void trackedObject::addRect (int frame, cv::Rect rect, float confidence, bool force) {
+void trackedObject::addRect (int frame, doubleRect rect, float confidence, bool force) {
     if ((frame >= startFrame && frame <= endFrame) && (!rects->contains(frame) || force)) {
-        rects->insert(frame, *new QPair<cv::Rect, float>(rect, confidence));
+        rects->insert(frame, *new QPair<doubleRect, float>(rect, confidence));
     }
 }
 
@@ -80,7 +91,7 @@ int trackedObject::getType () {
     return this->labelType;
 }
 
-cv::Rect trackedObject::getRect (int frame) {
+doubleRect trackedObject::getRect (int frame) {
     return rects->value(frame).first;
 }
 
@@ -88,7 +99,7 @@ int trackedObject::getSize() {
     return rects->size();
 }
 
-cv::Rect trackedObject::getRectIndex (int index) {
+doubleRect trackedObject::getRectIndex (int index) {
     for (int k : rects->keys()) {
         if (index == 0) {
             return rects->value(k).first;
@@ -97,7 +108,7 @@ cv::Rect trackedObject::getRectIndex (int index) {
         }
     }
 
-    return *new cv::Rect(-1, -1, -1, -1);
+    return *new doubleRect(-1, -1, -1, -1);
 }
 
 int trackedObject::getFrameNo (int index) {
@@ -122,4 +133,8 @@ float trackedObject::getConfidence (int index) {
     }
 
     return -1;
+}
+
+bool trackedObject::getTracker () {
+    return trackerPresent;
 }

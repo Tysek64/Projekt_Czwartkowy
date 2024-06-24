@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "QtConcurrent/qtconcurrentmap.h"
 #include "ui_mainwindow.h"
 
 #include <opencv2/core/core.hpp>
@@ -15,6 +16,7 @@
 #include <QJsonDocument>
 #include <objectconf.h>
 #include <QPixmap>
+#include <QProgressBar>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -22,7 +24,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    col = *new dataCollection();
+    try {
+        col = *new dataCollection();
+    } catch (cv::Exception e) {
+        qDebug() << 'a';
+    }
+
     col.setActiveName("test");
     player = new videoPlayer(this, col);
 
@@ -35,12 +42,31 @@ MainWindow::MainWindow(QWidget *parent) :
 
     paintMode = false;
 
+    spacebar = new QShortcut(Qt::Key_Space, this);
+    QObject::connect(spacebar, &QShortcut::activated, this, &MainWindow::on_pauseButton_clicked);
+
+    prev = new QShortcut(Qt::Key_Left, this);
+    QObject::connect(prev, &QShortcut::activated, this, &MainWindow::on_prevButton_clicked);
+
+    next = new QShortcut(Qt::Key_Right, this);
+    QObject::connect(next, &QShortcut::activated, this, &MainWindow::on_nextButton_clicked);
+
     connect(&timer, SIGNAL(timeout()), this, SLOT(on_timeout()));
+
+    cv::redirectError(errorHandler);
 }
+
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+int MainWindow::errorHandler(int status, const char* func_name, const char* err_msg, const char* file_name, int line, void*) 	{
+    QMessageBox mb;
+    mb.critical(nullptr, "Error", err_msg);
+    qDebug() << err_msg;
+    return 0;
 }
 
 void MainWindow::on_timeout () {
@@ -57,15 +83,15 @@ void MainWindow::displayFrame (bool normalPlayback) {
             cap.set(cv::CAP_PROP_POS_FRAMES, currentFrameNo);
         }
         ui->timeline->setValue(currentFrameNo);
-        cap.read(frame);
-        cv::resize(frame, frame, cv::Size(videoWidth, videoHeight));
+        cap.read(fullFrame);
+        cv::resize(fullFrame, frame, cv::Size(videoWidth, videoHeight));
         cvtColor(frame, frame, cv::COLOR_BGR2RGB);
         QImage dest((const uchar *)frame.data, frame.cols, frame.rows, frame.step, QImage::Format_RGB888);
 
         player->setPixmap(QPixmap::fromImage(dest));
         ui->currentFrame->display(currentFrameNo);
     }
-    player->updateFrame(frame, currentFrameNo, true);
+    player->updateFrame(fullFrame, currentFrameNo, true);
 }
 
 void MainWindow::on_pauseButton_clicked()
@@ -87,7 +113,6 @@ void MainWindow::on_prevButton_clicked()
     if (!timer.isActive() && currentFrameNo > 0 && cap.isOpened()) {
         currentFrameNo--;
         displayFrame(false);
-        //player->updateFrame(frame, currentFrameNo, true);
     }
 }
 
@@ -97,7 +122,6 @@ void MainWindow::on_nextButton_clicked()
     if (!timer.isActive() && currentFrameNo < cap.get(cv::CAP_PROP_FRAME_COUNT) - 1 && cap.isOpened()) {
         currentFrameNo++;
         displayFrame(false);
-        //player->updateFrame(frame, currentFrameNo, true);
     }
 }
 
@@ -107,7 +131,7 @@ void MainWindow::on_timeline_sliderMoved(int position)
     if (cap.isOpened()) {
         currentFrameNo = position;
         displayFrame(false);
-        player->updateFrame(frame, currentFrameNo, true);
+        player->updateFrame(fullFrame, currentFrameNo, true);
     }
 }
 
@@ -115,44 +139,46 @@ void MainWindow::on_timeline_sliderMoved(int position)
 void MainWindow::on_paintButton_toggled(bool checked)
 {
     if (cap.isOpened()) {
-    if (checked) {
-        timer.stop();
-        ui->pauseButton->setIcon(*new QIcon(":/icons/icons/play.svg"));
-        paintMode = true;
-        player->setPaintMode(true);
-        player->updateFrame(frame, currentFrameNo, false);
-    } else {
-        paintMode = false;
-        player->setPaintMode(false);
-    }
+        if (checked) {
+            timer.stop();
+            ui->pauseButton->setIcon(*new QIcon(":/icons/icons/play.svg"));
+            paintMode = true;
+            player->setPaintMode(true);
+            player->updateFrame(fullFrame, currentFrameNo, false);
+        } else {
+            paintMode = false;
+            player->setPaintMode(false);
+        }
 
-    player->repaint();
+        player->repaint();
     }
 }
 
 void MainWindow::on_openButton_clicked() {
+
     filename = QFileDialog::getOpenFileName(this, "Open file", QDir::homePath(), "video files (*.mp4 *.wmv *.avi *.mov *.3gp)");
     try {
-    cap.open(filename.toStdString(), cv::CAP_ANY);
-    if (cap.get(cv::CAP_PROP_FRAME_COUNT) > 0) {
-        currentFrameNo = 0;
-        videoWidth = this->ui->playerContainer->geometry().width();
-        videoHeight = this->ui->playerContainer->geometry().height();
-        paintMode = false;
-        player->setPaintMode(false);
-        ui->pauseButton->setIcon(*new QIcon(":/icons/icons/pause.svg"));
+        cap.open(filename.toStdString(), cv::CAP_ANY);
+        if (cap.get(cv::CAP_PROP_FRAME_COUNT) > 0) {
+            currentFrameNo = -1;
+            videoWidth = this->ui->playerContainer->geometry().width();
+            videoHeight = this->ui->playerContainer->geometry().height();
+            player->setDimensions(videoWidth, videoHeight);
+            paintMode = false;
+            player->setPaintMode(false);
+            ui->pauseButton->setIcon(*new QIcon(":/icons/icons/pause.svg"));
 
-        timer.start(1000 / cap.get(cv::CAP_PROP_FPS));
+            timer.start(1000 / cap.get(cv::CAP_PROP_FPS));
 
-        ui->totalFrames->display(cap.get(cv::CAP_PROP_FRAME_COUNT) - 1);
-        ui->timeline->setMaximum(cap.get(cv::CAP_PROP_FRAME_COUNT) - 1);
-    } else {
-        QMessageBox mb;
-        mb.critical(this, "File error", "File could not be read.");
-    }
+            ui->totalFrames->display(cap.get(cv::CAP_PROP_FRAME_COUNT) - 1);
+            ui->timeline->setMaximum(cap.get(cv::CAP_PROP_FRAME_COUNT) - 1);
+        } else {
+            //QMessageBox mb;
+            //mb.critical(this, "File error", QString::number(cap.get(cv::CAP_PROP_BITRATE)));
+        }
     } catch (cv::Exception e) {
         QMessageBox mb;
-        mb.critical(this, "File error", "File could not be read.");
+        mb.critical(this, "File error", QString::fromStdString(e.msg));
     }
 }
 
@@ -160,16 +186,17 @@ void MainWindow::on_openButton_clicked() {
 void MainWindow::on_addButton_clicked()
 {
     ui->selectionList->addItem(QString::number(counter));
-    col.addItem(QString::number(counter));
+    if (!col.addItem(QString::number(counter))) {
+        setStatus("No tracker present.");
+    }
     itemNames.insert(QString::number(counter), counter);
 
     counter++;
 }
 
-
 void MainWindow::on_selectionList_itemDoubleClicked(QListWidgetItem *item)
 {
-    objectConf *conf = new objectConf(this, *this, itemNames.key(ui->selectionList->currentRow()), col.getActiveItem(), cap.get(cv::CAP_PROP_FRAME_COUNT));
+    objectConf *conf = new objectConf(this, *this, ui->selectionList->currentItem()->text(), col.getActiveItem(), cap.get(cv::CAP_PROP_FRAME_COUNT));
     conf->show();
 }
 
@@ -177,11 +204,15 @@ void MainWindow::on_removeButton_clicked()
 {
     if (ui->selectionList->currentItem() != NULL) {
         col.removeActiveItem(true);
-        ui->selectionList->takeItem(itemNames.value(QString::number(ui->selectionList->currentRow())));
+        QString toRemove = ui->selectionList->currentItem()->text();
+        qDebug() << toRemove;
+        ui->selectionList->takeItem(ui->selectionList->currentRow());
         if (ui->selectionList->currentItem() != NULL) {
-            col.setActiveName(ui->selectionList->currentItem()->text());
+            col.setActiveName(QString::number(itemNames.value(ui->selectionList->currentItem()->text())));
             player->changeActive();
         }
+
+        itemNames.remove(toRemove);
     }
 }
 
@@ -213,12 +244,37 @@ void MainWindow::getConf (QString name, int start, int end, int labelClass, int 
 void MainWindow::on_saveButton_clicked()
 {
     savePath = QFileDialog::getExistingDirectory(this, "Choose save folder", QDir::homePath());
-    for (int i = 0;i < col.getSize();i++) {
+
+    int colSize = col.getSize();
+
+    QProgressBar* savePB = new QProgressBar();
+    savePB->setRange(0, colSize);
+    statusBar()->addWidget(savePB);
+
+    QList<int> indices(colSize);
+
+    for (int i = 0;i < colSize;i++) {
+        indices[i] = i;
+    }
+
+    QtConcurrent::blockingMap(indices.begin(), indices.end(), [this](int i){
+        saveLoop(i);
+    });
+
+    statusBar()->removeWidget(savePB);
+    delete savePB;
+    setStatus("Saving completed.");
+
+}
+
+void MainWindow::saveLoop (int i) {
+    try {
+        //savePB->setValue(i);
         cap.set(cv::CAP_PROP_POS_FRAMES, col.getFrameNo(i));
         cv::Mat trackedFrame;
         cap.read(trackedFrame);
         cvtColor(trackedFrame, trackedFrame, cv::COLOR_BGR2RGB);
-        cv::Rect roi = col.getImage(i);
+        cv::Rect roi = doubleToCv(col.getImage(i));
         if (roi.x + roi.width > videoWidth) {
             roi = *new cv::Rect(roi.x, roi.y, videoWidth - roi.x, roi.height);
         }
@@ -244,13 +300,13 @@ void MainWindow::on_saveButton_clicked()
             QMessageBox mb;
             mb.critical(this, "Save error", "Error saving file");
         }
+    } catch (cv::Exception e) {
+        //continue;
     }
-
-    QMessageBox mb;
-    mb.information(this, "Save complete", "Finished saving files");
 }
 
-    bool MainWindow::saveFile(cv::Mat image, cv::Rect roi, float confidence, int frameNo, int labelClass, int labelType, QString dir, QString filename)
+
+bool MainWindow::saveFile(cv::Mat image, cv::Rect roi, float confidence, int frameNo, int labelClass, int labelType, QString dir, QString filename)
 {
     QString savedFilename = dir + "/" + filename
                             + "_" + QString::number( frameNo )
@@ -327,3 +383,17 @@ void MainWindow::on_endButton_clicked()
     col.setActiveIten(current);
 }
 
+void MainWindow::setStatus(QString message) {
+    statusBar()->showMessage(message);
+}
+
+cv::Rect MainWindow::doubleToCv (doubleRect rect) {
+    return *new cv::Rect(rect.getX() * videoWidth, rect.getY() * videoHeight, rect.getW() * videoWidth, rect.getH() * videoHeight);
+}
+
+void MainWindow::resizeEvent (QResizeEvent* e) {
+    videoWidth = ui->playerContainer->width();
+    videoHeight = ui->playerContainer->height();
+
+    player->setDimensions(videoWidth, videoHeight);
+}

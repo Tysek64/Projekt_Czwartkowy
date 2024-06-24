@@ -20,10 +20,11 @@ public:
     int h;
 
     cv::Mat frame;
-    cv::Rect roi;
+    doubleRect roi;
 
     void updateFrame (cv::Mat frame, int frameNo, bool track);
     void changeActive();
+    void setDimensions (int w, int h);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -35,6 +36,9 @@ private:
     dataCollection* col;
     int currentFrameNo;
     bool mousePressed;
+    int videoWidth;
+    int videoHeight;
+    cv::Rect doubleToCv(doubleRect rect, int w, int h);
 
 signals:
 };

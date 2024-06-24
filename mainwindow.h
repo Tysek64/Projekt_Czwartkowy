@@ -5,8 +5,9 @@
 #include <QTimer>
 #include <QListWidgetItem>
 #include <videoPlayer.h>
-#include <dataCollection.h>
+#include <datacollection.h>
 #include <opencv2/videoio.hpp>
+#include <QShortcut>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -24,6 +25,7 @@ class MainWindow : public QMainWindow
 
     cv::VideoCapture cap;
     cv::Mat frame;
+    cv::Mat fullFrame;
 
     int currentFrameNo;
     bool paintMode;
@@ -33,6 +35,10 @@ public:
     ~MainWindow();
     dataCollection getcol();
     void getConf (QString name, int start, int end, int labelClass, int labelType);
+    void setStatus (QString message);
+
+protected:
+    void resizeEvent(QResizeEvent *event) override;
 
 private:
     Ui::MainWindow *ui;
@@ -42,7 +48,14 @@ private:
     int counter;
     int videoWidth;
     int videoHeight;
+    void saveImage (int i);
     bool saveFile(cv::Mat image, cv::Rect roi, float confidence, int frameNo, int labelClass, int labelType, QString dir, QString filename);
+    int static errorHandler(int status, const char* func_name, const char* err_msg, const char* file_name, int line, void*);
+    QShortcut* spacebar;
+    QShortcut* prev;
+    QShortcut* next;
+    cv::Rect doubleToCv(doubleRect rect);
+    void saveLoop(int i);
 
 private slots:
     void on_timeout();

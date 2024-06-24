@@ -13,7 +13,7 @@ videoPlayer::videoPlayer(QWidget *parent, dataCollection &col)
     h = -1;
     currentFrameNo = 0;
 
-    roi = *new cv::Rect(-1, -1, -1, -1);
+    roi = *new doubleRect(-1, -1, -1, -1);
 
     this->col = &col;
 }
@@ -28,9 +28,9 @@ void videoPlayer::paintEvent (QPaintEvent *e) {
     if (paintMode && x != -1 && y != -1 && w != -1 && h != -1) {
         if (!mousePressed) {
             for (int i = 0;i < col->getHSize();i++) {
-                if (col->getObject(i).getRect(currentFrameNo).width > 0) {
-                    cv::Rect rect = col->getObject(i).getRect(currentFrameNo);
-                    painter.drawRect(rect.x, rect.y, rect.width, rect.height);
+                if (col->getObject(i).getRect(currentFrameNo).getW() > 0) {
+                    doubleRect rect = col->getObject(i).getRect(currentFrameNo);
+                    painter.drawRect(rect.getX(), rect.getY(), rect.getW(), rect.getH());
                 }
             }
         } else {
@@ -38,16 +38,16 @@ void videoPlayer::paintEvent (QPaintEvent *e) {
         }
     }
             for (int i = 0;i < col->getHSize();i++) {
-    if (col->getObject(i).getRect(currentFrameNo).width > 0) {
-                if (col->getObject(i).getRect(currentFrameNo).width > 0) {
-                    cv::Rect rect = col->getObject(i).getRect(currentFrameNo);
-                    painter.drawRect(rect.x, rect.y, rect.width, rect.height);
+        if (col->getObject(i).getRect(currentFrameNo).getW() > 0) {
+                    if (col->getObject(i).getRect(currentFrameNo).getW() > 0) {
+                cv::Rect rect = doubleToCv(col->getObject(i).getRect(currentFrameNo), videoWidth, videoHeight);
+                        painter.drawRect(rect.x, rect.y, rect.width, rect.height);
                 }
     }
             }
     painter.setBrush(QBrush(QColor(255, 0, 0, 100)));
-        cv::Rect rect = col->getActiveItem().getRect(currentFrameNo);
-            painter.drawRect(rect.x, rect.y, rect.width, rect.height);
+            cv::Rect rect = doubleToCv(col->getActiveItem().getRect(currentFrameNo), videoWidth, videoHeight);
+    painter.drawRect(rect.x, rect.y, rect.width, rect.height);
 
     painter.end();
 }
@@ -86,17 +86,22 @@ void videoPlayer::mouseReleaseEvent (QMouseEvent *e) {
     if (this->w < 0) {
         this->x += this->w;
         this->w *= -1;
+    } else if (this->w == 0) {
+        this->w = 1;
     }
 
     if (this->h < 0) {
         this->y += this->h;
         this->h *= -1;
+    } else if (this->h == 0) {
+        this->h = 1;
     }
 
-    this->roi = *new cv::Rect(x, y, w, h);
+    this->roi = *new doubleRect((double)x / videoWidth, (double)y / videoHeight, (double)w / videoWidth, (double)h / videoHeight);
 
     this->col->getActiveItem().addRect(currentFrameNo, roi, 1.0f, true);
-    this->col->getActiveItem().initTracker(frame, roi);
+    cv::Rect roiCV = doubleToCv(roi, frame.cols, frame.rows);
+    this->col->getActiveItem().initTracker(frame, roiCV);
 
     repaint();
     }
@@ -106,8 +111,10 @@ void videoPlayer::updateFrame (cv::Mat frame, int frameNo, bool track) {
     if (track) {
     for (int i = 0;i < col->getHSize();i++) {
         roi = col->getObject(i).getRect(currentFrameNo);
-        if (this->roi.width > 0 && this->roi.height > 0 && col->getObject(i).getRect(frameNo).width <= 0) {
-            float confidence = this->col->getObject(i).updateTracker(frame, roi);
+        if (this->roi.getW() > 0 && this->roi.getH() > 0 && col->getObject(i).getRect(frameNo).getW() <= 0) {
+    cv::Rect roiCV = doubleToCv(roi, frame.rows, frame.cols);
+            float confidence = this->col->getObject(i).updateTracker(frame, roiCV);
+    roi = *new doubleRect((double)roiCV.x / frame.cols, (double)roiCV.y / frame.rows, (double)roiCV.width / frame.cols, (double)roiCV.height / frame.rows);
         col->getObject(i).addRect(frameNo, roi, confidence, false);
     }
     }
@@ -119,4 +126,13 @@ void videoPlayer::updateFrame (cv::Mat frame, int frameNo, bool track) {
 
 void videoPlayer::changeActive () {
     repaint();
+}
+
+void videoPlayer::setDimensions (int w, int h) {
+    videoWidth = w;
+    videoHeight = h;
+}
+
+cv::Rect videoPlayer::doubleToCv (doubleRect rect, int w, int h) {
+    return *new cv::Rect(rect.getX() * w, rect.getY() * h, rect.getW() * w, rect.getH() * h);
 }

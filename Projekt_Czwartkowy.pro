@@ -1,4 +1,4 @@
-QT       += core gui
+QT       += core gui concurrent
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -26,6 +26,7 @@ LIBS += $$CVLIBS
 
 SOURCES += \
     datacollection.cpp \
+    doublerect.cpp \
     main.cpp \
     mainwindow.cpp \
     objectconf.cpp \
@@ -34,6 +35,7 @@ SOURCES += \
 
 HEADERS += \
     datacollection.h \
+    doublerect.h \
     mainwindow.h \
     objectconf.h \
     trackedobject.h \

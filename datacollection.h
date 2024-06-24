@@ -5,13 +5,14 @@
 #include <QHash>
 #include <opencv2/core.hpp>
 #include <trackedobject.h>
+#include <doublerect.h>
 
 class dataCollection
 {
 public:
     dataCollection();
     void init();
-    void addItem (QString name);
+    bool addItem (QString name);
     void removeItem(QString name);
     void removeActiveItem(bool withName);
     QString getActiveName();
@@ -23,7 +24,7 @@ public:
     void setRect (trackedObject rect);
     int getSize();
     int getHSize();
-    cv::Rect getImage(int frame);
+    doubleRect getImage(int frame);
     int getFrameNo(int frame);
     float getConfidence (int frame);
     trackedObject getItem(int frame);

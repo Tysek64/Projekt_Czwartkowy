@@ -6,9 +6,9 @@ dataCollection::dataCollection() {
     activeItem = *new QString();
 }
 
-void dataCollection::addItem (QString name) {
-    qDebug() << 'a';
+bool dataCollection::addItem (QString name) {
     rects->insert(name, *new trackedObject());
+    return rects->value(name).getTracker();
 }
 
 void dataCollection::removeItem (QString name) {
@@ -60,7 +60,7 @@ void dataCollection::setRect (trackedObject rect) {
     rects->insert(activeItem, rect);
 }
 
-cv::Rect dataCollection::getImage (int frame) {
+doubleRect dataCollection::getImage (int frame) {
     for (QString k : rects->keys()) {
         if (frame < rects->value(k).getSize()) {
             return rects->value(k).getRectIndex(frame);
@@ -69,7 +69,7 @@ cv::Rect dataCollection::getImage (int frame) {
         }
     }
 
-    return *new cv::Rect(-1, -1, -1, -1);
+    return *new doubleRect(-1, -1, -1, -1);
 }
 
 int dataCollection::getFrameNo (int frame) {
