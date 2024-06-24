@@ -247,24 +247,11 @@ void MainWindow::on_saveButton_clicked()
 
     int colSize = col.getSize();
 
-    QProgressBar* savePB = new QProgressBar();
-    savePB->setRange(0, colSize);
-    statusBar()->addWidget(savePB);
-
-    QList<int> indices(colSize);
-
     for (int i = 0;i < colSize;i++) {
-        indices[i] = i;
+        saveLoop(i);
     }
 
-    QtConcurrent::blockingMap(indices.begin(), indices.end(), [this](int i){
-        saveLoop(i);
-    });
-
-    statusBar()->removeWidget(savePB);
-    delete savePB;
     setStatus("Saving completed.");
-
 }
 
 void MainWindow::saveLoop (int i) {
@@ -394,6 +381,14 @@ cv::Rect MainWindow::doubleToCv (doubleRect rect) {
 void MainWindow::resizeEvent (QResizeEvent* e) {
     videoWidth = ui->playerContainer->width();
     videoHeight = ui->playerContainer->height();
+    if (fullFrame.rows > 0 && fullFrame.cols > 0) {
+        cv::resize(fullFrame, frame, cv::Size(videoWidth, videoHeight));
+        cvtColor(frame, frame, cv::COLOR_BGR2RGB);
+        QImage dest((const uchar *)frame.data, frame.cols, frame.rows, frame.step, QImage::Format_RGB888);
+
+        player->setPixmap(QPixmap::fromImage(dest));
+        ui->currentFrame->display(currentFrameNo);
+    }
 
     player->setDimensions(videoWidth, videoHeight);
 }
